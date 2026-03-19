@@ -13,4 +13,6 @@ build/
 *.out
 *.synctex.gz
 *.pdf
+paper.tex
+refs.bib
 .DS_Store
