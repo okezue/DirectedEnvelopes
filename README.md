@@ -1,0 +1,5 @@
+# Directed Envelopes and Convex Lattice Design for Probabilistic Verification
+
+This repository contains a Lean 4 formalization of the results in "Directed Envelopes and Convex Lattice Design for Probabilistic Verification." The formalization covers the directed-distance envelope theorem for minimal verification-contingent wedges, the submodularity of reduced wedge costs under coordinatewise lower bounds, the convexity of the joint allocation-verification-transfer design problem, the two-stage scaling theorem yielding joint supermodularity, the Milgrom-Shannon single-crossing route to monotone verification, the Kleene fixed-point characterization, and the discounted directed closure with its contraction property. Every theorem is proved from first principles with no axioms or sorry placeholders. The shortest-path distance is constructed via an inductive walk type, with the triangle inequality proved by walk concatenation and the tightening property proved by telescoping sums along walks.
+
+Build with `lake build` (requires Lean 4.28.0 and Mathlib). The `paper.tex` source and reference Python implementation are included alongside the Lean proofs.

@@ -1,0 +1,1116 @@
+\documentclass[final,3p,times]{elsarticle}
+\usepackage{textcomp}
+%% \documentclass[final,1p,times]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn]{elsarticle}
+%% \documentclass[final,3p,times]{elsarticle}
+%% \documentclass[final,3p,times,twocolumn]{elsarticle}
+%% \documentclass[final,5p,times]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn]{elsarticle}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bbm}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{listings}
+
+\journal{Journal of Mathematical Economics}
+
+
+% ---------- Theorem environments ----------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{remark}{Remark}
+
+% ---------- Macros ----------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Rp}{\R_{+}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\1}{\mathbbm{1}}
+\newcommand{\ThetaSet}{\Theta}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\cW}{\mathcal{W}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\argmax}{\mathop{\mathrm{arg\,max}}}
+\newcommand{\argmin}{\mathop{\mathrm{arg\,min}}}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Directed Envelopes and Convex Lattice Design for Probabilistic Verification}
+
+\author[aff1]{Alexander Okezue Bell}
+% \author[aff2]{Second Author}
+\address[aff1]{Department of Mathematics, Stanford University, Stanford, CA US}
+% \address[aff2]{Department, University, City, Country}
+% \cortext[cor1]{Corresponding author}
+% \ead{email@address.com}
+
+\begin{abstract}
+Probabilistic verification mechanisms use stochastic pass-fail tests rather than deterministic evidence. We study direct mechanisms in which an agent reports a type, the principal chooses a test, the agent may try or intentionally fail, and transfers and outcomes depend on pass or fail. In a class where the pass-fail utility wedge is report-specific but type-independent, incentive constraints are multiplicative in wedges; after a logarithmic transform they become difference constraints on a directed graph of authentication rates. We prove an envelope theorem: componentwise minimal wedges supporting any allocation-implied lower bounds equal a directed-distance extension computable by shortest paths. We embed this envelope inside a unified design problem in which the principal chooses two-outcome allocations, verification intensities, and transfers. Under log-convex wedge lower bounds and convex verification costs, the joint problem is convex. We then identify multi-dimensional stake environments in which the reduced wedge cost is submodular, yielding a lattice of optimal stake vectors. A microfounded two-stage verification technology implies scalable authentication after directed closure and produces a joint lattice in stakes and verification; without full scaling, single-crossing conditions ensure monotone verification. Finally, we give algorithms combining shortest paths, convex optimization, and bisection.
+\end{abstract}
+
+\begin{keyword}
+verification \sep evidence \sep convexity \sep submodularity \sep lattice \sep interdiction \sep incentives
+\end{keyword}
+
+% \begin{keyword}
+% JEL: D82 \sep D86 \sep C61
+% \end{keyword}
+
+\end{frontmatter}
+
+\section{Introduction}
+
+Verification is rarely perfect. In many applications, like discount eligibility, targeted pricing, compliance audits, insurance claims, and eligibility screening, claims can be challenged, but challenges succeed only probabilistically. A recent mechanism-design framework models verification as a pass-fail test whose outcome is stochastic and type-dependent, and assumes that the agent can always intentionally fail a test by withholding effort or documentation \citep{BallKattwinkel2025}. 
+
+This paper develops a toolkit for probabilistic verification in direct mechanisms, with a focus on three linked themes:
+(i) minimal verification-contingent transfers supporting a prescribed allocation rule; 
+(ii) unified joint design of allocations, verification, and transfers; and 
+(iii) lattice and convex structure of the reduced problem, including multi-dimensional submodularity and algorithmic decompositions.
+
+Our analysis is based on a directed graph representation of verification. In a broad class where the pass-fail utility increment is report-specific but type-independent (``wedge separability''), incentive constraints are multiplicative. Taking logs converts them into classical difference constraints, so feasibility and minimality can therefore be solved by shortest-path methods \citep{CLRS2009}. Our first main result (Theorem~\ref{thm:envelope}) gives an end-to-end envelope formula for the componentwise minimal wedges, and thus minimal verification-contingent transfers, that support any given system of wedge lower bounds.
+
+Second, we embed the envelope inside a joint design problem in which the principal chooses two-outcome allocations, verification, and transfers to maximize expected payoff. Under log-convex wedge lower bounds and convex verification costs, we show that the full joint problem is a convex program after a logarithmic change of variables (Theorem~\ref{thm:convex}). This convexity creates a bridge to efficient computation \citep{BoydVandenberghe2004,BoydKimVandenbergheHassibi2007}.
+
+Third, we derive lattice structure for the reduced wedge costs. For multi-dimensional stakes $q\in\R_+^m$, we identify a class of allocation sets in which wedge lower bounds are coordinatewise. In that class, the reduced wedge cost is submodular on $\R_+^m$ (Theorem~\ref{thm:submodularity}), which implies supermodularity of the principal's reduced objective and yields high-dimensional lattice structure and monotone comparative statics \citep{Topkis1998}. We then give two complementary routes to joint monotonicity in verification: 
+a microfounded two-stage verification technology that induces scalable authentication after directed closure (Theorem~\ref{thm:two-stage}), and a weaker single-crossing route based on Milgrom-Shannon monotone comparative statics \citep{MilgromShannon1994} (Theorem~\ref{thm:MS}).
+
+Finally, we discuss verification costs and capacity constraints. Because directed closure maps verification into shortest-path distances, verification design problems can inherit the hardness of network interdiction problems \citep{KhachiyanEtAl2008}. At the same time, certain special cases reduce to tractable min-cut problems. We also provide a convex-lattice algorithmic decomposition: when verification intensity is a chain, a bisection method combined with convex feasibility computes minimal verification required to support a target stake vector.
+
+\subsection*{Contributions relative to the literature}
+
+The paper is self-contained and does not require the details of any specific application. Our results complement existing probabilistic verification models by: 
+(1) giving a minimal-transfer envelope in a graph-theoretic form; 
+(2) providing a unified convex program for joint design; 
+(3) identifying high-dimensional submodularity conditions and a microfounded scaling condition that yields joint lattice structure; and 
+(4) proposing algorithmic decompositions that exploit both convexity and monotonicity.
+
+\section{Model}
+
+\subsection{Types, reports, and reduced-form authentication}
+
+The agent has type $\theta\in\ThetaSet:=\{1,\dots,n\}$ with prior $\mu\in\Delta(\ThetaSet)$. A direct mechanism asks the agent to report $i\in\ThetaSet$. After observing the report, the principal selects a pass-fail test. The agent can either try or intentionally fail; if he does not try, he fails with certainty.
+
+We summarize the effect of the test choice by a reduced-form authentication matrix
+\[
+\alpha_t(i\mid \theta)\in(0,1],\qquad t\in\cT,
+\]
+where $t$ indexes verification intensity or technology choice.\footnote{In the test protocol of \citet{BallKattwinkel2025}, $\alpha$ can be derived from an underlying family of tests; under their most-discerning condition the technology can be summarized by a single authentication rate. Our results take $\alpha$ as a primitive and focus on the incentive constraints it generates.}
+
+The normalization $\alpha_t(\theta\mid \theta)=1$ is without loss for our wedge-based analysis: if truthful types pass their intended test with probability $\pi_t(\theta\mid\theta)\in(0,1]$, scale all passage probabilities by $\pi_t(\cdot\mid\cdot)/\pi_t(\theta\mid\theta)$ and scale the pass-dependent transfer wedge accordingly. Thus $\alpha_t(i\mid\theta)$ can be interpreted as a relative probability of successful authentication as report $i$ by true type $\theta$.
+
+\subsection{Two-outcome contracts and wedges}
+
+Fix a report $i$. The principal commits to two outcomes:
+\[
+(x_i^P,t_i^P)\in\cX\times\R,\qquad (x_i^F,t_i^F)\in\cX\times\R,
+\]
+to be delivered upon pass (superscript $P$) or fail (superscript $F$). The agent has quasilinear utility
+\[
+U_\theta(x,t)=u_\theta(x)+t.
+\]
+If a type-$\theta$ agent reports $i$ and tries, he passes with probability $\alpha_t(i\mid\theta)$ and fails otherwise; if he intentionally fails, he receives the fail outcome with certainty. The agent therefore chooses to try if and only if passing is weakly better than failing.
+
+Define the report-$i$ pass-fail wedge for type $\theta$:
+\[
+\Delta_{\theta i}:=\big(u_\theta(x_i^P)-u_\theta(x_i^F)\big)+\big(t_i^P-t_i^F\big).
+\]
+The agent's expected utility from report $i$ is
+\[
+u_\theta(x_i^F)+t_i^F + \max\{0,\alpha_t(i\mid\theta)\Delta_{\theta i}\}.
+\]
+Because the agent can intentionally fail, negative wedges are irrelevant (the agent would not try). Our focus is on positive wedges that implement incentive constraints.
+
+\subsection{Wedge-separable allocation sets}
+
+Many applications allow the designer to control transfers but only partially control allocations. We introduce a class in which two-outcome allocations can be summarized by a report-specific wedge variable.
+
+\begin{assumption}[Wedge separability]\label{ass:wedge-sep}
+For each report $i$, the pass-fail utility wedge is type-independent:
+\[
+\Delta_{\theta i}\equiv y_i\quad\text{for all }\theta\in\ThetaSet,
+\]
+and $y_i>0$.
+\end{assumption}
+
+Assumption~\ref{ass:wedge-sep} holds whenever the allocation increment is type-independent and transfers can be used to complete the wedge. A prominent special case is transfer-only wedges ($x_i^P=x_i^F$), where $y_i=t_i^P-t_i^F$. Another is when $u_\theta(x)=u(x)$ is common-value and the pass-fail allocation difference $u(x_i^P)-u(x_i^F)$ does not depend on $\theta$. 
+
+Under wedge separability, incentive constraints depend on $\alpha_t$ and the report wedges $y$, and not on the detailed decomposition between allocations and transfers. In Section~\ref{sec:recover} we show how to recover minimal verification-contingent transfers supporting a given allocation rule in this class.
+
+\section{Incentive compatibility as log-Lipschitz constraints}
+
+Under Assumption~\ref{ass:wedge-sep}, if type $\theta$ reports $i$ and tries, his incremental expected payoff above the fail baseline is $\alpha_t(i\mid\theta)y_i$. If he reports truthfully, he obtains $y_\theta$. 
+
+We focus on the reduced-form wedge incentive constraints:
+\begin{equation}\label{eq:IC}
+y_\theta \ge \alpha_t(i\mid\theta)\,y_i\qquad \forall \theta,i\in\ThetaSet.
+\end{equation}
+These inequalities are a natural reduced-form IC system in probabilistic verification: any misreport can only earn a fraction $\alpha_t(i\mid\theta)$ of the misreport's wedge because successful authentication is probabilistic.
+
+Taking logs yields a difference-constraints representation. Define
+\[
+r_i:=\log y_i,\qquad w_t(\theta,i):=-\log \alpha_t(i\mid\theta)\in[0,\infty).
+\]
+Then \eqref{eq:IC} is equivalent to 
+\begin{equation}\label{eq:diff}
+r_i - r_\theta \le w_t(\theta,i)\qquad \forall \theta,i\in\ThetaSet.
+\end{equation}
+The constraints \eqref{eq:diff} are exactly difference constraints on a directed graph with arc lengths $w_t$ \citep[Ch.~24]{CLRS2009}. They can be interpreted as a directed version of a Lipschitz condition: $r$ is 1-Lipschitz with respect to the directed semimetric induced by $w_t$.
+
+\section{Minimal wedges and transfers via a directed-distance envelope}\label{sec:envelope}
+
+We now treat an allocation rule as imposing report-specific lower bounds on wedges, and compute the minimal verification-contingent wedges (and transfers) that implement it.
+
+\subsection{Allocation-implied wedge lower bounds}
+
+Fix $t$ and $\alpha_t$. Let $\underline y\in (0,\infty)^{\ThetaSet}$ be any vector of required wedge lower bounds, which may be induced by feasibility or participation constraints once allocations $(x_i^P,x_i^F)$ are fixed. Define 
+\[
+g_i:=\log \underline y_i.
+\]
+We seek the componentwise minimal $r$ (equivalently $y$) satisfying
+\begin{equation}\label{eq:feas-r}
+r\ge g,\qquad r_i-r_\theta\le w_t(\theta,i)\;\; \forall \theta,i.
+\end{equation}
+
+\subsection{Directed graph distance}
+
+Consider the directed graph on node set $\ThetaSet$ with arc lengths $w_t(\theta,i)$. For $\theta,j\in\ThetaSet$, let $d_t(\theta,j)$ denote the shortest-path distance from $\theta$ to $j$:
+\[
+d_t(\theta,j):=\inf\left\{\sum_{\ell=0}^{k-1} w_t(\theta_\ell,\theta_{\ell+1}) : \theta=\theta_0\to\cdots\to\theta_k=j \right\}.
+\]
+We adopt the convention $d_t(\theta,\theta)=0$ and allow $d_t(\theta,j)=+\infty$ if $j$ is unreachable from $\theta$. Since arc lengths are nonneg, $d_t\ge 0$ and $d_t(\theta,i)\le w_t(\theta,i)$ for every arc $(\theta,i)$. The function $d_t$ satisfies the triangle inequality $d_t(\theta,k)\le d_t(\theta,j)+d_t(j,k)$ for all $\theta,j,k$, because concatenating any walk from $\theta$ to $j$ with any walk from $j$ to $k$ yields a walk from $\theta$ to $k$ whose weight is the sum.
+
+\begin{lemma}[Directed metric closure]\label{lem:closure}
+Let $d_t$ be the shortest-path distance induced by $w_t$. Then for any $r\in\R^{\ThetaSet}$,
+the pairwise constraints \eqref{eq:diff} are equivalent to their directed-closure form
+\begin{equation}\label{eq:metric-closure}
+r_i-r_\theta \le d_t(\theta,i)\qquad \forall \theta,i\in\ThetaSet.
+\end{equation}
+In particular, the feasible set of \eqref{eq:diff} depends on $w_t$ only through its directed metric
+closure $d_t$.
+\end{lemma}
+
+\begin{proof}
+($\Rightarrow$) Fix $\theta,i\in\ThetaSet$ and assume \eqref{eq:diff} holds.
+For any directed walk $p:\theta=\theta_0\to\theta_1\to\cdots\to\theta_k=i$, summing the edge-wise
+constraints $r_{\theta_{\ell+1}}-r_{\theta_\ell}\le w_t(\theta_\ell,\theta_{\ell+1})$ over $\ell=0,\dots,k-1$ telescopes to
+\[
+r_i-r_\theta \le \sum_{\ell=0}^{k-1} w_t(\theta_\ell,\theta_{\ell+1}).
+\]
+Since $d_t(\theta,i)$ is the infimum of the right-hand side over all walks, $r_i-r_\theta\le d_t(\theta,i)$, which is \eqref{eq:metric-closure}.
+
+($\Leftarrow$) Conversely, assume \eqref{eq:metric-closure} holds. For each ordered pair $(\theta,i)$,
+the single-edge path $\theta\to i$ is among the admissible paths in the definition of $d_t(\theta,i)$ (when the
+arc length is finite), hence $d_t(\theta,i)\le w_t(\theta,i)$. Therefore,
+\[
+r_i-r_\theta \le d_t(\theta,i)\le w_t(\theta,i),
+\]
+which is exactly \eqref{eq:diff}.
+\end{proof}
+
+\begin{remark}[Imitation chains]\label{rem:imitation-chains}
+Directed closure can strictly tighten constraints. If for some $(\theta,i,k)$ we have
+$w_t(\theta,k)>w_t(\theta,i)+w_t(i,k)$, then \eqref{eq:diff} alone includes the weak bound
+$r_k-r_\theta\le w_t(\theta,k)$, but closure forces the sharper bound
+$r_k-r_\theta\le w_t(\theta,i)+w_t(i,k)$.
+Economically, the latter corresponds to a two-step impersonation chain in which type $\theta$ first passes as $i$ and then passes as $k$.
+\end{remark}
+
+\subsection{Envelope theorem}
+
+\begin{theorem}[Directed-distance envelope]\label{thm:envelope}
+Fix $t$ and $\alpha_t$, and let $d_t$ be the induced shortest-path distance. Define
+\begin{equation}\label{eq:envelope-r}
+r^\star_\theta \;:=\; \max_{j\in\ThetaSet}\{\, g_j - d_t(\theta,j)\,\}\qquad (\theta\in\ThetaSet).
+\end{equation}
+Then:
+\begin{enumerate}[label=(\roman*)]
+\item $r^\star$ satisfies \eqref{eq:feas-r}.
+\item If $r$ satisfies \eqref{eq:feas-r}, then $r\ge r^\star$ componentwise.
+\end{enumerate}
+Equivalently, the componentwise minimal wedge vector is
+\begin{equation}\label{eq:envelope-y}
+y^\star_\theta \;=\; e^{r^\star_\theta}
+\;=\; \max_{j\in\ThetaSet}\left\{e^{-d_t(\theta,j)}\,\underline y_j\right\}.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+First, $r^\star\ge g$ because $d_t(\theta,\theta)=0$ implies $r^\star_\theta\ge g_\theta$. 
+
+Next, fix $\theta,i$. For any $j$, the triangle inequality for $d_t$ gives $d_t(\theta,j)\le d_t(\theta,i)+d_t(i,j)$, and $d_t(\theta,i)\le w_t(\theta,i)$ because the single-edge path $\theta\to i$ is admissible. Combining these two bounds yields $d_t(\theta,j)\le w_t(\theta,i)+d_t(i,j)$.
+Rearranging gives $g_j-d_t(i,j)\le g_j-d_t(\theta,j)+w_t(\theta,i)$. Taking maxima over $j$ yields
+\[
+r^\star_i=\max_j\{g_j-d_t(i,j)\}\le \max_j\{g_j-d_t(\theta,j)\}+w_t(\theta,i)=r^\star_\theta+w_t(\theta,i),
+\]
+so $r^\star_i-r^\star_\theta\le w_t(\theta,i)$, i.e.\ \eqref{eq:feas-r} holds.
+
+For minimality, let $r$ satisfy \eqref{eq:feas-r}. We first establish that the difference constraints with respect to $w_t$ imply the tighter difference constraints with respect to $d_t$. Fix any directed walk $p:\theta=\theta_0\to\theta_1\to\cdots\to\theta_k=j$. Summing the edge-wise constraints $r_{\theta_{\ell+1}}-r_{\theta_\ell}\le w_t(\theta_\ell,\theta_{\ell+1})$ telescopes to
+\[
+r_j-r_\theta \le \sum_{\ell=0}^{k-1} w_t(\theta_\ell,\theta_{\ell+1}).
+\]
+Since $d_t(\theta,j)$ is the infimum of all such walk weights and the right-hand side is the weight of a particular walk, $r_j-r_\theta\le d_t(\theta,j)$. Therefore $r_\theta\ge r_j-d_t(\theta,j)\ge g_j-d_t(\theta,j)$, where the second inequality uses $r_j\ge g_j$. Maximizing over $j$ yields $r_\theta\ge r^\star_\theta$.
+\end{proof}
+
+\begin{remark}[Lipschitz extension interpretation]
+The constraints $r_i-r_\theta\le w_t(\theta,i)$ can be viewed as a directed 1-Lipschitz condition. The envelope formula \eqref{eq:envelope-r} is a directed analog of the McShane extension formula for Lipschitz functions \citep{McShane1934,Petrakis2020}: it is the smallest 1-Lipschitz function dominating the boundary values $g$.
+\end{remark}
+
+\begin{remark}[Fixed-point characterization]
+Appendix~\ref{app:fixedpoint} gives a complementary characterization of $y^\star$ as the least fixed point of a monotone
+operator, and shows how the directed-distance envelope emerges from unrolling that operator.
+\end{remark}
+
+\begin{corollary}[Prior-free minimality of $y^\star$]\label{cor:priorfree}
+Fix $t$ and $\underline y$. Let $y^\star$ be the componentwise minimal wedge vector given by Theorem~\ref{thm:envelope}.
+Then for every weight vector $c\in\R_{++}^{\ThetaSet}$, $y^\star$ solves
+\[
+\min_{y\in(0,\infty)^{\ThetaSet}}\ \sum_{\theta\in\ThetaSet} c_\theta y_\theta
+\quad\text{s.t.}\quad
+y\ge \underline y,\ \ y_\theta\ge \alpha_t(i\mid\theta)y_i\ \ \forall \theta,i.
+\]
+In particular, $y^\star$ minimizes expected wedge payments for every prior $\mu$.
+\end{corollary}
+
+\begin{proof}
+By Theorem~\ref{thm:envelope}(ii), every feasible $y$ satisfies $y\ge y^\star$ componentwise.
+If $c\in\R_{++}^{\ThetaSet}$, then $\sum_\theta c_\theta y_\theta\ge \sum_\theta c_\theta y^\star_\theta$.
+Hence $y^\star$ is optimal for every such $c$.
+\end{proof}
+
+
+\subsection{Recovering minimal verification-contingent transfers}\label{sec:recover}
+
+We now connect the wedge envelope to minimal transfers supporting a prescribed allocation rule under wedge separability.
+
+Fix any two-outcome allocation rule $(x_i^P,x_i^F)_{i\in\ThetaSet}$ such that the allocation wedge
+\[
+\delta_i:=u_\theta(x_i^P)-u_\theta(x_i^F)
+\]
+is independent of $\theta$ (this is part of wedge separability). Let $\underline y_i>0$ be a required total wedge lower bound, for example imposed by limited liability constraints on transfers:
+\[
+t_i^P-t_i^F \ge \underline b_i \quad\Rightarrow\quad y_i=\delta_i+(t_i^P-t_i^F)\ge \delta_i+\underline b_i =:\underline y_i.
+\]
+Given $\underline y$, Theorem~\ref{thm:envelope} gives the componentwise minimal wedges $y^\star$. Any transfer scheme satisfying
+\[
+t_i^P-t_i^F = y_i^\star-\delta_i
+\]
+implements the minimal wedges. If one additionally imposes a participation constraint at the fail outcome, say $u_\theta(x_i^F)+t_i^F\ge 0$ for all $\theta$, a componentwise minimal choice is $t_i^F:=\max_\theta\{-u_\theta(x_i^F)\}$ (or $t_i^F:=0$ if $u_\theta(x_i^F)\ge 0$) and then $t_i^P$ as above. Thus, in the wedge-separable class, the minimal-transfer problem reduces to shortest paths and an explicit envelope.
+
+\section{Type-dependent allocation wedges: discounted directed closure}
+
+Assumption~\ref{ass:wedge-sep} is restrictive when non-monetary allocations generate type-dependent pass-fail differences. This section provides a tractable extension that retains a graph closure, but in discounted rather than logarithmic form.
+
+\subsection{Affine incentive constraints with verification bonuses}
+
+Fix deterministic allocations $a_i\in\cX$ for each report $i$ (e.g.\ a single outcome rather than two outcomes). Suppose the mechanism offers a nonnegative verification-contingent bonus $b_i\ge 0$ that is paid only if the agent passes the report-$i$ test. Normalizing the fail baseline to $u_\theta(a_i)$, the agent's expected utility from report $i$ is
+\[
+u_\theta(a_i) + \alpha(i\mid\theta)\,b_i.
+\]
+Truthful incentive compatibility requires
+\begin{equation}\label{eq:affIC}
+u_\theta(a_\theta)+b_\theta \ge u_\theta(a_i)+\alpha(i\mid\theta)b_i
+\qquad \forall \theta,i.
+\end{equation}
+Equivalently, writing $\Delta_{\theta i}:=u_\theta(a_\theta)-u_\theta(a_i)$,
+\begin{equation}\label{eq:affIC2}
+b_\theta \ge \alpha(i\mid\theta)b_i - \Delta_{\theta i}\qquad \forall \theta,i.
+\end{equation}
+
+\subsection{A contraction condition}
+
+\begin{assumption}[Uniformly imperfect impersonation]\label{ass:rho}
+There exists $\rho\in[0,1)$ such that $\alpha(i\mid\theta)\le \rho$ for all $i\neq \theta$.
+\end{assumption}
+
+Assumption~\ref{ass:rho} states that no type can pass as a different type with probability close to one. It implies a contraction property and yields a unique minimal bonus vector.
+
+\subsection{Discounted path envelope}
+
+Define the operator $T:\R^{\ThetaSet}\to\R^{\ThetaSet}$ by
+\begin{equation}\label{eq:Bell}
+(Tb)_\theta := \max\left\{0,\ \max_{i\neq\theta}\{\alpha(i\mid\theta)b_i-\Delta_{\theta i}\}\right\}.
+\end{equation}
+
+\begin{theorem}[Discounted directed closure]\label{thm:discounted}
+Under Assumption~\ref{ass:rho}, the set of $b\in\R^{\ThetaSet}$ satisfying \eqref{eq:affIC2} and $b\ge 0$ has a unique componentwise minimal element $b^\star$. Moreover, for each $\theta$,
+\begin{equation}\label{eq:DP}
+b^\star_\theta
+=\sup_{k\ge 0}\ \sup_{\theta=\theta_0,\theta_1,\dots,\theta_k}
+\sum_{\ell=0}^{k-1}\left(\prod_{m=0}^{\ell-1}\alpha(\theta_{m+1}\mid\theta_m)\right)\big(-\Delta_{\theta_\ell,\theta_{\ell+1}}\big),
+\end{equation}
+where the length-$0$ path yields $0$.
+\end{theorem}
+
+\begin{proof}
+A vector $b$ satisfies \eqref{eq:affIC2} and $b\ge 0$ if and only if $b\ge Tb$ componentwise, where $T$ is defined in \eqref{eq:Bell}. This follows by rearranging \eqref{eq:affIC2}, restricting to $i\neq\theta$ (the case $i=\theta$ is redundant), and enforcing $b_\theta\ge 0$ by the outer maximum.
+
+For any $b,b'$ and any $\theta$, write $f_i=\alpha(i\mid\theta)b_i-\Delta_{\theta i}$ and $f'_i$ analogously for $b'$. Since $\max\{0,\cdot\}$ is $1$-Lipschitz,
+\[
+|(Tb)_\theta-(Tb')_\theta|
+\le \big|\max_{i\neq\theta} f_i - \max_{i\neq\theta} f'_i\big|.
+\]
+The maximum over a finite set is also $1$-Lipschitz, so
+\[
+\big|\max_{i\neq\theta} f_i - \max_{i\neq\theta} f'_i\big|
+\le \max_{i\neq\theta}|f_i-f'_i|
+= \max_{i\neq\theta}\alpha(i\mid\theta)|b_i-b'_i|
+\le \rho\,\|b-b'\|_\infty,
+\]
+where the last step uses $\alpha(i\mid\theta)\le\rho$ for $i\neq\theta$. Thus $T$ is a $\rho$-contraction in the sup norm.
+
+By Banach's fixed-point theorem, $T$ has a unique fixed point $b^\star$, and for any initial $b^{(0)}$ the iterates $b^{(k+1)}=Tb^{(k)}$ converge to $b^\star$. Starting from $b^{(0)}\equiv 0$, monotonicity of $T$ implies $b^{(k)}$ is nondecreasing and bounded above by any supersolution. Taking limits implies $b^\star$ is the componentwise minimal supersolution, hence the componentwise minimal feasible bonus vector.
+
+Unrolling the recursion shows $b^{(k)}_\theta$ equals the supremum of discounted sums \eqref{eq:DP} over paths of length at most $k$. Passing to the limit yields \eqref{eq:DP}. 
+\end{proof}
+
+\begin{remark}
+Theorem~\ref{thm:discounted} replaces logarithmic shortest paths by a discounted dynamic-programming closure. The wedge-separable case corresponds to $\Delta_{\theta i}\equiv 0$ and thus collapses to the multiplicative constraints of Section~\ref{sec:envelope}.
+\end{remark}
+
+\section{Joint design as a convex program}\label{sec:convex}
+
+We now formulate a unified design problem in which the principal chooses allocations, verification, and transfers jointly.
+
+\subsection{Design variables}
+
+We parameterize verification by log-lengths $w(\theta,i)\ge 0$ and define $\alpha(i\mid\theta)=e^{-w(\theta,i)}$ with $w(\theta,\theta)=0$. Let $x_i^P,x_i^F\in\cX$ be the pass and fail allocations. Let $r_i=\log y_i$ be log-wedges.
+
+We treat allocation feasibility as imposing log-wedge lower bounds. Let $\underline y:\cX\times\cX\to(0,\infty)$, and define
+\[
+g(x^P,x^F):=\log \underline y(x^P,x^F).
+\]
+The constraint $y_i\ge \underline y(x_i^P,x_i^F)$ becomes $r_i\ge g(x_i^P,x_i^F)$.
+
+\subsection{Principal objective}
+
+Let $s_\theta(x^P,x^F)$ denote the principal's expected benefit from assigning $(x_\theta^P,x_\theta^F)$ to type $\theta$ in the truthful report (exclusive of the wedge transfer). The principal's expected wedge payment is $\sum_\theta \mu_\theta e^{r_\theta}$. Let $K(w)$ be a verification cost or disutility and $\cW$ a feasible set (e.g.\ capacity constraints). 
+
+The principal's unified problem is:
+\begin{equation}\label{eq:CP}
+\begin{aligned}
+\max_{(x^P,x^F,r,w)}\quad
+& \sum_{\theta\in\ThetaSet}\mu_\theta\, s_\theta(x_\theta^P,x_\theta^F)
+-\sum_{\theta\in\ThetaSet}\mu_\theta\,e^{r_\theta}-K(w)\\
+\text{s.t.}\quad
+& r_i-r_\theta \le w(\theta,i)\qquad \forall \theta,i\in\ThetaSet,\\
+& r_i \ge g(x_i^P,x_i^F)\qquad \forall i\in\ThetaSet,\\
+& (x_i^P,x_i^F)\in \cX\times\cX\qquad \forall i\in\ThetaSet,\\
+& w\in \cW,\quad w(\theta,i)\ge 0,\quad w(i,i)=0.
+\end{aligned}
+\end{equation}
+This is a joint optimization over allocations, verification, and transfers, expressed in reduced-form wedge variables.
+
+\subsection{Convexity}
+
+\begin{theorem}[Convexity of the joint design problem]\label{thm:convex}
+Assume:
+\begin{enumerate}[label=(\roman*)]
+\item $\cX$ and $\cW$ are convex sets;
+\item for each $\theta$, $s_\theta$ is concave on $\cX\times\cX$;
+\item $g$ is convex on $\cX\times\cX$;
+\item $K$ is convex on $\cW$.
+\end{enumerate}
+Then \eqref{eq:CP} is a convex optimization problem (maximize a concave objective over a convex feasible set).
+\end{theorem}
+
+\begin{proof}
+The constraints $r_i-r_\theta\le w(\theta,i)$ are affine, hence convex. The constraints $r_i\ge g(x_i^P,x_i^F)$ define the epigraph of a convex function, hence convex. Convexity of $\cX$ and $\cW$ ensures the remaining feasibility constraints are convex.
+
+The objective is a sum of concave terms: $\sum_\theta \mu_\theta s_\theta$ is concave; $-\sum_\theta \mu_\theta e^{r_\theta}$ is concave since $e^{(\cdot)}$ is convex and $\mu_\theta\ge 0$; and $-K(w)$ is concave. Therefore, the overall problem is convex \citep{BoydVandenberghe2004}.
+\end{proof}
+
+\begin{remark}[Geometric-programming viewpoint]
+When $g$ is convex because $\underline y$ is log-convex in $(x^P,x^F)$, the change of variables $r=\log y$ is a standard log-domain convexification as in geometric programming \citep{BoydKimVandenbergheHassibi2007}. 
+\end{remark}
+
+\subsection{Eliminating wedges: a reduced convex program}\label{sec:reduce}
+
+Because the objective in \eqref{eq:CP} is decreasing in each $r_\theta$ (via $-\exp(r_\theta)$), the optimal
+$r$ for given $(x^P,x^F,w)$ is the smallest feasible one. The directed-distance envelope therefore allows
+an explicit elimination of the wedge variables.
+
+\begin{proposition}[Reduced convex formulation]\label{prop:reduced-convex}
+Assume the conditions of Theorem~\ref{thm:convex}. For any feasible $(x^P,x^F,w)$, let $d_w(\theta,j)$ be the shortest-path
+distance induced by arc lengths $w(\cdot,\cdot)$, and define
+\begin{equation}\label{eq:rstar-xw}
+r^\star_\theta(x^P,x^F,w):=\max_{j\in\ThetaSet}\Big\{ g(x_j^P,x_j^F)-d_w(\theta,j)\Big\}.
+\end{equation}
+Then:
+\begin{enumerate}[label=(\roman*)]
+\item The convex program \eqref{eq:CP} is equivalent to the reduced problem
+\begin{equation}\label{eq:CP-reduced}
+\begin{aligned}
+\max_{(x^P,x^F,w)}\quad
+& \sum_{\theta\in\ThetaSet}\mu_\theta\, s_\theta(x_\theta^P,x_\theta^F)
+-\sum_{\theta\in\ThetaSet}\mu_\theta\,\exp\big(r^\star_\theta(x^P,x^F,w)\big)-K(w)\\
+\text{s.t.}\quad
+& (x_i^P,x_i^F)\in \cX\times\cX\qquad \forall i\in\ThetaSet,\\
+& w\in \cW,\quad w(\theta,i)\ge 0,\quad w(i,i)=0.
+\end{aligned}
+\end{equation}
+\item The reduced objective in \eqref{eq:CP-reduced} is concave, so \eqref{eq:CP-reduced} is a (possibly nonsmooth) convex optimization problem.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Fix $(x^P,x^F,w)$ satisfying the feasibility constraints of \eqref{eq:CP} other than those involving $r$.
+The $r$-subproblem is
+\[
+\max_{r\in\R^{\ThetaSet}}\ -\sum_{\theta}\mu_\theta e^{r_\theta}
+\quad\text{s.t.}\quad
+r_i-r_\theta\le w(\theta,i)\ \ \forall \theta,i,\qquad
+r_i\ge g(x_i^P,x_i^F)\ \ \forall i.
+\]
+The feasible set is nonempty (take $r$ very large). Because $-\sum_\theta \mu_\theta e^{r_\theta}$ is strictly decreasing in each component,
+an optimizer must be the componentwise minimal feasible $r$.
+By Theorem~\ref{thm:envelope} applied with boundary values $g(x_i^P,x_i^F)$ and arc lengths $w$, that minimal vector is exactly $r^\star(x^P,x^F,w)$
+as defined in \eqref{eq:rstar-xw}. Substituting this optimal choice of $r$ yields \eqref{eq:CP-reduced}.
+
+Fix $\theta,j$ and write the shortest-path distance as a minimum over (simple) directed paths:
+\[
+d_w(\theta,j)=\min_{p\in\mathcal{P}_{\theta j}}\ \sum_{(u,v)\in p} w(u,v),
+\]
+where $\mathcal{P}_{\theta j}$ is the (finite) set of simple $\theta\to j$ paths.\footnote{With $w\ge 0$, cycles cannot improve a shortest path, so restricting to simple paths is without loss.}
+Each path length $\sum_{(u,v)\in p} w(u,v)$ is linear in $w$, and the pointwise minimum of linear functions is concave.
+Hence $w\mapsto d_w(\theta,j)$ is concave, so $(x^P,x^F,w)\mapsto -d_w(\theta,j)$ is convex.
+
+By assumption, $(x_j^P,x_j^F)\mapsto g(x_j^P,x_j^F)$ is convex, so the sum
+$(x^P,x^F,w)\mapsto g(x_j^P,x_j^F)-d_w(\theta,j)$ is convex. Taking a pointwise maximum over $j$ preserves convexity,
+therefore $r^\star_\theta(x^P,x^F,w)$ is convex.
+Because $\exp(\cdot)$ is convex and nondecreasing, $\exp(r^\star_\theta(\cdot))$ is convex, and so $\sum_\theta \mu_\theta \exp(r^\star_\theta(\cdot))$ is convex.
+Thus $-\sum_\theta \mu_\theta \exp(r^\star_\theta(\cdot))$ is concave.
+The remaining terms $\sum_\theta \mu_\theta s_\theta(x_\theta^P,x_\theta^F)$ and $-K(w)$ are concave by assumption.
+Hence the reduced objective in \eqref{eq:CP-reduced} is concave.
+\end{proof}
+
+\section{Verification costs and capacity constraints: a graph perspective}
+
+The directed-distance envelope of Section~\ref{sec:envelope} implies that verification affects incentives only through shortest-path distances induced by $w=-\log \alpha$. This section briefly discusses the resulting structure.
+
+\subsection{Verification design as network interdiction}
+
+\begin{proposition}[Verification design contains shortest-path interdiction]\label{prop:interdiction}
+Let $\ThetaSet$ be a node set and let $E\subseteq \ThetaSet\times\ThetaSet$ be a set of directed arcs.
+Suppose the principal chooses a binary interdiction vector $z\in\{0,1\}^E$ and the induced verification lengths are
+\[
+w_z(\theta,i)=\bar w(\theta,i)+z(\theta,i)\Delta(\theta,i)\qquad ((\theta,i)\in E),
+\]
+with $\bar w(\theta,i)\ge 0$ and $\Delta(\theta,i)\ge 0$, and $w_z(\theta,i)=+\infty$ for $(\theta,i)\notin E$.
+Let the feasible set be the budget constraint $\sum_{(\theta,i)\in E} \kappa(\theta,i)z(\theta,i)\le B$ with $\kappa(\theta,i)\ge 0$.
+Fix distinct nodes $s,t\in\ThetaSet$, and define an upper bound
+\[
+U := (|\ThetaSet|-1)\,\max_{(\theta,i)\in E}\big(\bar w(\theta,i)+\Delta(\theta,i)\big).
+\]
+Let wedge lower bounds be $\underline y_t=e^{U}$ and $\underline y_j=1$ for all $j\neq t$.
+Then for every feasible $z$ the directed-distance envelope yields
+\[
+y^\star_s(\underline y,w_z)=e^{U}\,e^{-d_{w_z}(s,t)},
+\]
+where $d_{w_z}(s,t)$ is the shortest-path distance induced by $w_z$.
+Consequently, minimizing $y^\star_s(\underline y,w_z)$ over feasible $z$ is equivalent to maximizing $d_{w_z}(s,t)$,
+the classical shortest-path interdiction objective.
+In particular, this verification design problem is NP-hard \citep{KhachiyanEtAl2008}.
+\end{proposition}
+
+\begin{proof}
+Fix a feasible $z$. Let $g_j=\log \underline y_j$, so $g_t=U$ and $g_j=0$ for $j\neq t$.
+Because every simple directed path has at most $|\ThetaSet|-1$ arcs and every arc length is at most
+$\max_{(\theta,i)\in E}(\bar w(\theta,i)+\Delta(\theta,i))$, any finite shortest-path distance satisfies
+$d_{w_z}(s,t)\le U$. Therefore $U-d_{w_z}(s,t)\ge 0$, while for any $j\neq t$ we have
+$g_j-d_{w_z}(s,j)\le 0$ (since $g_j=0$ and $d_{w_z}(s,j)\ge 0$).
+Applying Theorem~\ref{thm:envelope} gives
+\[
+r^\star_s=\max_{j}\{g_j-d_{w_z}(s,j)\}=U-d_{w_z}(s,t),
+\]
+and hence $y^\star_s=e^{r^\star_s}=e^{U}e^{-d_{w_z}(s,t)}$.
+Because the map $d\mapsto e^{U}e^{-d}$ is strictly decreasing, minimizing $y^\star_s$ is equivalent to maximizing $d_{w_z}(s,t)$.
+NP-hardness follows because shortest-path interdiction is NP-hard \citep{KhachiyanEtAl2008} and the above mapping is polynomial-time.
+\end{proof}
+
+\subsection{A polynomial special case: hard blocking and min-cut}
+
+\begin{proposition}[Hard blocking reduces to a minimum cut]\label{prop:mincut}
+Let $G=(\ThetaSet,E)$ be a directed graph of feasible impersonation steps, where an arc $(\theta,i)\in E$ means that
+the principal can set $\alpha(i\mid\theta)>0$ unless she hard blocks it.
+Assume hard blocking sets $\alpha(i\mid\theta)=0$ (equivalently $w(\theta,i)=+\infty$) at cost $\kappa(\theta,i)\ge 0$.
+Fix a target report $t\in\ThetaSet$ and a set of source types $S\subseteq\ThetaSet\setminus\{t\}$.
+Consider the verification problem:
+\[
+\min_{F\subseteq E}\ \sum_{(\theta,i)\in F}\kappa(\theta,i)
+\quad\text{s.t.}\quad
+\]
+in $G\setminus F,$ there is no directed path from any $s\in S$ to $t$.
+
+This problem is equivalent to a minimum $s^\ast$-$t$ cut in an augmented graph obtained by adding a supersource $s^\ast$
+with zero-cost arcs $(s^\ast,s)$ for all $s\in S$, and assigning arc capacities $\kappa(\theta,i)$ on each $(\theta,i)\in E$.
+Hence it is solvable in polynomial time by max-flow/min-cut algorithms \citep[Ch.~26]{CLRS2009}.
+\end{proposition}
+
+\begin{proof}
+Form the augmented graph $\tilde G=(\tilde V,\tilde E)$ with $\tilde V=\ThetaSet\cup\{s^\ast\}$ and
+\[
+\tilde E:=E\ \cup\ \{(s^\ast,s): s\in S\}.
+\]
+Assign capacities $\mathrm{cap}(\theta,i)=\kappa(\theta,i)$ for $(\theta,i)\in E$, and assign $\mathrm{cap}(s^\ast,s)=+\infty$ for $(s^\ast,s)$.
+
+Let $(A,\tilde V\setminus A)$ be any $s^\ast$-$t$ cut with $s^\ast\in A$ and $t\notin A$.
+Define $F:=\{(\theta,i)\in E: \theta\in A,\ i\notin A\}$, i.e.\ the original arcs crossing the cut.
+Then removing $F$ from $G$ eliminates all directed paths from $S$ to $t$:
+any such path would extend to a path from $s^\ast$ to $t$ via the added arc $(s^\ast,s)$, but every
+$s^\ast$-$t$ path must cross the cut, and the only finite-capacity cut arcs are in $F$.
+The blocking cost equals the cut capacity because the infinite-capacity arcs $(s^\ast,s)$ cannot be in any finite minimum cut.
+
+Conversely, let $F\subseteq E$ be feasible, so that in $G\setminus F$ there is no path from $S$ to $t$.
+Let $A$ be the set of vertices reachable from $s^\ast$ in $\tilde G\setminus F$.
+Then $s^\ast\in A$ and $t\notin A$ by feasibility. Moreover, every original arc $(\theta,i)\in E$ with $\theta\in A$ and $i\notin A$
+must belong to $F$; otherwise $i$ would be reachable and thus in $A$. Hence the cut capacity is at most $\sum_{e\in F}\kappa_e$.
+
+Combining the two directions shows that minimum-cost feasible blocking sets correspond exactly to minimum $s^\ast$-$t$ cuts,
+so the problem is solvable by max-flow/min-cut \citep[Ch.~26]{CLRS2009}.
+\end{proof}
+ 
+
+\section{Submodularity and a high-dimensional lattice on stakes}\label{sec:submodularity}
+
+We now study multi-dimensional stake vectors $q\in\R_+^m$ and identify conditions under which the reduced wedge cost is submodular on the product lattice $Q:=\R_+^m$.
+
+\subsection{Stakes and coordinatewise wedge lower bounds}
+
+Let contracts be indexed by $j\in\{1,\dots,m\}$. Suppose the allocation design induces a wedge lower bound that is coordinatewise:
+\begin{equation}\label{eq:coord}
+\underline y_j(q)=\phi_j(q_j),
+\end{equation}
+where each $\phi_j:\R_+\to(0,\infty)$ is nondecreasing.
+
+Fix $t$ and define the directed-distance coefficients
+\[
+c_{\theta j}(t):=e^{-d_t(\theta,j)}\in(0,1],
+\]
+where $d_t$ is the shortest-path distance induced by $w_t=-\log \alpha_t$. By Theorem~\ref{thm:envelope}, the minimal wedges are
+\begin{equation}\label{eq:yqt}
+y^\star_\theta(q,t)=\max_{j\in\{1,\dots,m\}} c_{\theta j}(t)\,\phi_j(q_j),
+\end{equation}
+and the reduced wedge bill is
+\[
+P_t(q):=\sum_{\theta\in\ThetaSet}\mu_\theta\, y^\star_\theta(q,t).
+\]
+
+\subsection{Submodularity}
+
+\begin{definition}[Submodularity on $\R_+^m$]
+A function $f:Q\to\R$ is submodular if for all $q,q'\in Q$,
+\[
+f(q)+f(q')\ge f(q\vee q')+f(q\wedge q'),
+\]
+where the join and meet are taken coordinatewise.
+\end{definition}
+
+\begin{theorem}[Submodularity of reduced wedge cost]\label{thm:submodularity}
+Fix $t$. Under \eqref{eq:coord} with nondecreasing $\phi_j$, the reduced wedge cost $P_t:Q\to\R_+$ is submodular.
+\end{theorem}
+
+\begin{proof}
+It suffices to prove submodularity of each term 
+\[
+f_\theta(q):=\max_j c_{\theta j}(t)\phi_j(q_j),
+\]
+and then sum with weights $\mu_\theta\ge 0$.
+
+Fix $\theta$ and let $a_j=c_{\theta j}(t)\phi_j(q_j)$ and $b_j=c_{\theta j}(t)\phi_j(q'_j)$. Then $f_\theta(q)=\max_j a_j$ and $f_\theta(q')=\max_j b_j$. For any sequences $(a_j),(b_j)$,
+\begin{equation}\label{eq:keymaxmin}
+\max_j a_j+\max_j b_j \ge \max_j \max\{a_j,b_j\} + \max_j \min\{a_j,b_j\}.
+\end{equation}
+To see \eqref{eq:keymaxmin}, let $A=\max_j a_j$ and $B=\max_j b_j$. Since $\max\{a_j,b_j\}\le \max\{A,B\}$ for each $j$, we have $\max_j\max\{a_j,b_j\}\le \max\{A,B\}$. Similarly, since $\min\{a_j,b_j\}\le \min\{A,B\}$ for each $j$, we have $\max_j\min\{a_j,b_j\}\le \min\{A,B\}$. Therefore the right-hand side of \eqref{eq:keymaxmin} is at most $\max\{A,B\}+\min\{A,B\}=A+B$.
+
+Now use monotonicity of $\phi_j$. Coordinatewise,
+\[
+\max\{\phi_j(q_j),\phi_j(q'_j)\}=\phi_j((q\vee q')_j),\qquad
+\min\{\phi_j(q_j),\phi_j(q'_j)\}=\phi_j((q\wedge q')_j).
+\]
+Multiplying by $c_{\theta j}(t)\ge 0$ preserves max/min, so
+\[
+\max\{a_j,b_j\}=c_{\theta j}(t)\phi_j((q\vee q')_j),\qquad
+\min\{a_j,b_j\}=c_{\theta j}(t)\phi_j((q\wedge q')_j).
+\]
+Substituting into \eqref{eq:keymaxmin} yields 
+$f_\theta(q)+f_\theta(q')\ge f_\theta(q\vee q')+f_\theta(q\wedge q')$. Summing over $\theta$ proves submodularity of $P_t$.
+\end{proof}
+
+\begin{remark}[Why coordinatewise wedge bounds matter]\label{rem:coord-fail}
+Theorem~\ref{thm:submodularity} uses the coordinatewise structure \eqref{eq:coord}. Without it, the reduced wedge cost need not be submodular. For example, let $m=2$, a single type, and suppose the allocation lower bound is $\underline y(q)=1+q_1q_2$ (strictly increasing in both coordinates). Then $P_t(q)=\underline y(q)$ and for $q=(1,0)$ and $q'=(0,1)$ we have
+\[
+P_t(q)+P_t(q')=1+1 < 2+1=P_t(q\vee q')+P_t(q\wedge q'),
+\]
+so submodularity fails. Coordinatewise lower bounds restore submodularity by allowing join/meet to pass through the max structure in \eqref{eq:yqt}.
+\end{remark}
+
+\subsection{Lattice structure of the reduced principal problem}
+
+Suppose the principal chooses $q\in Q$ to maximize
+\[
+F(q,t)=V(q)-P_t(q)-C(t),
+\]
+where $V$ is the gross benefit from stakes and $C$ is the verification cost.
+
+If $V$ is modular (e.g.\ separable $V(q)=\sum_j v_j(q_j)$) then $-P_t$ is supermodular by Theorem~\ref{thm:submodularity}. Hence $F(\cdot,t)$ is supermodular on $Q$ for each fixed $t$. Standard results then imply that the set of maximizers is a sublattice, and in particular has smallest and largest elements \citep{Topkis1998}. 
+
+\section{Joint lattice in stakes and verification}\label{sec:jointlattice}
+
+Submodularity of $P_t$ yields lattice structure in $q$ for each fixed $t$. This section gives two complementary ways to obtain monotone structure in $t$ as well.
+
+\subsection{A two-stage microfoundation implying scalable authentication after closure}
+
+Ball and Kattwinkel show that a class of verification technologies can be represented by semimetric authentication rates of the form $\alpha(\theta'\mid\theta)=\exp(-d(\theta,\theta'))$ \citep{BallKattwinkel2025}. We now provide a two-stage verification procedure that yields a scaling property after directed closure.
+
+\begin{assumption}[Two-stage semimetric verification]\label{ass:twostage}
+There exists a directed semimetric $d_0$ on $\ThetaSet$ (i.e.\ $d_0(\theta,\theta)=0$ and $d_0(\theta,k)\le d_0(\theta,i)+d_0(i,k)$) and a scalar function $\kappa:\cT\to(0,1]$ such that, for $\theta\neq i$,
+\[
+\alpha_t(i\mid\theta)=\kappa(t)\exp(-d_0(\theta,i)),\qquad \alpha_t(\theta\mid\theta)=1.
+\]
+\end{assumption}
+
+Assumption~\ref{ass:twostage} is microfounded by an independent global audit that rejects any false claim with probability $1-\kappa(t)$, combined with a report-specific semimetric documentation test with passage probability $\exp(-d_0(\theta,i))$. The overall pass event is the intersection of the two, giving the product form.
+
+Let $w_t=-\log\alpha_t$. For $\theta\neq i$, $w_t(\theta,i)=-\log\kappa(t)+d_0(\theta,i)$.
+
+\begin{lemma}[Directed closure preserves the scaling]\label{lem:closure-scaling}
+Under Assumption~\ref{ass:twostage}, the shortest-path distance induced by $w_t$ satisfies
+\[
+d_t(\theta,i)= -\log\kappa(t)+d_0(\theta,i)\quad (\theta\neq i),
+\]
+and therefore
+\[
+c_{\theta i}(t)=e^{-d_t(\theta,i)}=\kappa(t)\,e^{-d_0(\theta,i)}.
+\]
+\end{lemma}
+
+\begin{proof}
+Fix $\theta\neq i$. For any path $p:\theta=\theta_0\to\cdots\to\theta_k=i$,
+\[
+\sum_{\ell=0}^{k-1} w_t(\theta_\ell,\theta_{\ell+1})
+= \sum_{\ell=0}^{k-1} \big(-\log\kappa(t)+d_0(\theta_\ell,\theta_{\ell+1})\big)
+= k(-\log\kappa(t))+\sum_{\ell=0}^{k-1} d_0(\theta_\ell,\theta_{\ell+1}).
+\]
+By the triangle inequality for $d_0$, $\sum_{\ell} d_0(\theta_\ell,\theta_{\ell+1})\ge d_0(\theta,i)$. Hence the path length is at least $k(-\log\kappa(t))+d_0(\theta,i)\ge (-\log\kappa(t))+d_0(\theta,i)$ because $k\ge 1$ and $-\log\kappa(t)\ge 0$. The direct edge $\theta\to i$ has exactly length $-\log\kappa(t)+d_0(\theta,i)$, so it is shortest and $d_t(\theta,i)=-\log\kappa(t)+d_0(\theta,i)$. Exponentiating yields the scaling.
+\end{proof}
+
+When wedge lower bounds are coordinatewise as in Section~\ref{sec:submodularity}, scaling implies that the reduced wedge cost scales multiplicatively with $\kappa(t)$.
+
+\begin{theorem}[Joint supermodularity under two-stage scaling]\label{thm:two-stage}
+Assume:
+\begin{enumerate}[label=(\roman*)]
+\item wedge lower bounds are coordinatewise as in \eqref{eq:coord};
+\item verification satisfies Assumption~\ref{ass:twostage} with $\kappa$ nonincreasing in $t$;
+\item $V$ is modular and $C$ depends only on $t$.
+\end{enumerate}
+Let $Q$ be any complete sublattice of $\R_+^m$ and let $T$ be a chain (complete lattice). Then the reduced objective $F(q,t)=V(q)-P_t(q)-C(t)$ is supermodular on $Q\times T$. In particular, the set of maximizers is a complete sublattice and admits smallest and largest optimal pairs.
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:closure-scaling} and \eqref{eq:yqt},
+\[
+y^\star_\theta(q,t)=\max_j \kappa(t)\,e^{-d_0(\theta,j)}\phi_j(q_j)=\kappa(t)\,\max_j e^{-d_0(\theta,j)}\phi_j(q_j)=\kappa(t)\,y^\star_\theta(q,0),
+\]
+where the second equality uses $\kappa(t)\ge 0$ to factor the scalar out of the maximum.
+Hence $P_t(q)=\kappa(t)P_0(q)$. Fix $q\le q'$ and $t\le t'$. Compute the cross difference:
+\[
+\begin{aligned}
+&F(q',t')+F(q,t)-F(q',t)-F(q,t') \\
+&= (\kappa(t)-\kappa(t'))(P_0(q')-P_0(q)).
+\end{aligned}
+\]
+Because $\kappa$ is nonincreasing, $\kappa(t)-\kappa(t')\ge 0$. Because each $\phi_j$ is nondecreasing and nonneg, and each $c_{\theta j}(0)\ge 0$, the function $P_0$ is nondecreasing in $q$, so $P_0(q')-P_0(q)\ge 0$. Thus the cross difference is nonnegative, i.e.\ $F$ is supermodular. Lattice structure of maximizers follows from standard supermodular maximization results \citep{Topkis1998}.
+\end{proof}
+
+\begin{remark}[Joint lattice can fail without rank-1 scaling]\label{rem:scaling-fail}
+Even with coordinatewise wedge bounds, joint supermodularity in $(q,t)$ can fail when verification changes the relative coefficients $c_{\theta j}(t)$ in a non-rank-1 way. Consider a single type ($\mu=1$), two contracts $j=1,2$, $\phi_j(q_j)=q_j$, and two verification levels $t<t'$. Let $c_{1}(t)=1$, $c_{2}(t)=0.1$ but $c_{1}(t')=0.1$, $c_{2}(t')=1$. For $q=(1,0)\le q'=(1,1)$,
+\[
+P_t(q)=1,\quad P_{t'}(q)=0.1,\quad P_t(q')=1,\quad P_{t'}(q')=1,
+\]
+so $P$ has increasing differences:
+\[
+P(q',t')+P(q,t)-P(q',t)-P(q,t')=0.9>0,
+\]
+and therefore $F=V-P-C$ cannot be supermodular unless $V$ offsets this effect. Assumption~\ref{ass:twostage} rules out such coefficient rotations by forcing $c_{\theta j}(t)=\kappa(t)c_{\theta j}(0)$.
+\end{remark}
+
+\subsection{Single-crossing conditions without full scaling}
+
+When verification does not scale as in Assumption~\ref{ass:twostage}, joint supermodularity may fail. We now provide an alternative sufficient condition ensuring monotone selection in $t$ based on the Milgrom-Shannon monotone comparative statics theorem \citep{MilgromShannon1994}.
+
+\begin{assumption}[Monotone marginal wedge cost]\label{ass:mmc}
+For all $q\le q'$ in $Q$, the difference $P_t(q')-P_t(q)$ is nonincreasing in $t$.
+\end{assumption}
+
+\begin{lemma}[Single-crossing]\label{lem:singlecross}
+Under Assumption~\ref{ass:mmc}, the reduced objective $F(q,t)=V(q)-P_t(q)-C(t)$ satisfies the single-crossing property in $(q,t)$: for $q\le q'$ and $t\le t'$,
+\[
+F(q',t)\ge F(q,t)\ \Rightarrow\ F(q',t')\ge F(q,t').
+\]
+\end{lemma}
+
+\begin{proof}
+Assume $F(q',t)\ge F(q,t)$. Then $V(q')-V(q)\ge P_t(q')-P_t(q)$. By Assumption~\ref{ass:mmc}, $P_{t'}(q')-P_{t'}(q)\le P_t(q')-P_t(q)$. Hence $V(q')-V(q)\ge P_{t'}(q')-P_{t'}(q)$, which is equivalent to $F(q',t')\ge F(q,t')$.
+\end{proof}
+
+\begin{theorem}[Monotone selection in verification intensity]\label{thm:MS}
+Assume:
+\begin{enumerate}[label=(\roman*)]
+\item $Q$ is a complete lattice and $T$ is a chain;
+\item for each $t$, $F(\cdot,t)$ is quasi-supermodular on $Q$ (in particular, this holds if $V$ is modular and $P_t$ is submodular);
+\item Assumption~\ref{ass:mmc} holds (so Lemma~\ref{lem:singlecross} gives single crossing).
+\end{enumerate}
+Then the maximizer correspondence $q^\star(t)\in\argmax_{q\in Q}F(q,t)$ admits monotone selections in $t$ (e.g.\ the smallest and largest maximizers are nondecreasing in $t$).
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:singlecross}, $F$ satisfies single crossing in $(q,t)$. By assumption, $F(\cdot,t)$ is quasi-supermodular for each $t$. The conclusion follows by applying Theorem~1 of \citet{MilgromShannon1994}, which shows that under quasi-supermodularity and single crossing, the solution correspondence is increasing in strong set order; in particular, extremal selections are monotone.
+\end{proof}
+
+\section{A convex-lattice bridge and algorithms}\label{sec:alg}
+
+This section formalizes an algorithmic decomposition that exploits convexity (Section~\ref{sec:convex}) and chain monotonicity (Section~\ref{sec:jointlattice}). A complete, executable reference implementation in Python of these routines is provided in Appendix~\ref{app:code}.
+
+\subsection{Shortest-path evaluation of minimal wedges}
+
+Given $\alpha_t$ and wedge lower bounds $\underline y$, Theorem~\ref{thm:envelope} implies that the minimal wedges are computed by (i) build arc lengths $w_t(\theta,i)=-\log\alpha_t(i\mid\theta)$, (ii) compute all-pairs shortest-path distances $d_t$, and (iii) return $y^\star_\theta=\max_j e^{-d_t(\theta,j)}\underline y_j$. Therefore all-pairs shortest paths can be computed in $O(n^3)$ time by Floyd-Warshall or in $O(n^2\log n)$ for sparse graphs using Dijkstra from each source when arc lengths are nonnegative \citep[Ch.~24]{CLRS2009}.
+
+\subsection{Outer bisection in verification}
+
+Let verification feasibility depend on a scalar intensity $t\in T=[\underline t,\overline t]\subset\R$ through a nested family of convex sets:
+\[
+\cW(t_1)\subseteq \cW(t_2)\quad \text{whenever } t_1\le t_2.
+\]
+For example, $\cW(t)=\{w\ge 0: \langle c,w\rangle\le t,\ w_{ii}=0\}$ is a convex budget constraint. Consider the feasibility problem: for a given target stake vector $\bar q$ (or target wedge bounds induced by $\bar q$), does there exist $(x^P,x^F,r,w)$ satisfying \eqref{eq:CP}'s constraints with $w\in\cW(t)$? Call the answer $\mathrm{Feas}(t)\in\{\textsc{true},\textsc{false}\}$.
+
+\begin{proposition}[Monotone feasibility]\label{prop:monofeas}
+If $\cW(t)$ is nested as above, then $\mathrm{Feas}(t)$ is nondecreasing in $t$: if $\mathrm{Feas}(t)=\textsc{true}$ and $t'\ge t$, then $\mathrm{Feas}(t')=\textsc{true}$. 
+If, in addition, the feasibility problem is convex for each fixed $t$, then the minimal feasible $\inf\{t:\mathrm{Feas}(t)=\textsc{true}\}$ can be computed to accuracy $\varepsilon$ by bisection in $O(\log((\overline t-\underline t)/\varepsilon))$ convex feasibility solves \citep[Sec.~4.2.5]{BoydVandenberghe2004}.
+\end{proposition}
+
+\begin{proof}
+Monotonicity follows from nesting: any feasible $w\in\cW(t)$ is also feasible in $\cW(t')$ for $t'\ge t$. Bisection applies because the feasible set in $t$ is an interval by monotonicity; each step solves a convex feasibility problem. 
+\end{proof}
+
+\begin{corollary}[Bisection using monotone optimal stakes]\label{cor:bisect}
+Suppose $Q$ and $T=[\underline t,\overline t]$ are chains and conditions of Theorem~\ref{thm:MS} hold, so the largest optimal stake $q^{+}(t)$ is nondecreasing in $t$. Fix a target stake $\bar q\in Q$. Then the minimal verification intensity
+\[
+t^\star(\bar q):=\inf\{t\in T:\ q^{+}(t)\ge \bar q\}
+\]
+can be computed to accuracy $\varepsilon$ by bisection in $t$, where each bisection step solves the convex program defining $q^{+}(t)$ at the candidate $t$ and checks whether $q^{+}(t)\ge \bar q$.
+\end{corollary}
+
+\begin{proof}
+By monotonicity of $q^{+}(t)$, the set $\{t: q^{+}(t)\ge \bar q\}$ is an interval. Bisection therefore applies. Each evaluation of the predicate requires computing $q^{+}(t)$, which is obtained by a convex optimization solve under Theorem~\ref{thm:convex}. 
+\end{proof}
+
+% \subsection{Pseudocode}
+
+% \begin{center}
+% \begin{tabular}{p{0.92\linewidth}}
+% \hline
+% \textbf{Algorithm 1:} Bisection in verification intensity with convex feasibility\\
+% \hline
+% \textbf{Input:} target $\bar q$, bounds $\underline t<\overline t$, tolerance $\varepsilon$\\
+% \textbf{Step 0:} ensure $\mathrm{Feas}(\underline t)=\textsc{false}$ and $\mathrm{Feas}(\overline t)=\textsc{true}$\\
+% \textbf{While} $\overline t-\underline t>\varepsilon$:\\
+% \quad set $t\leftarrow(\underline t+\overline t)/2$\\
+% \quad solve the convex feasibility problem at $t$\\
+% \quad \textbf{if} feasible set is nonempty \textbf{then} $\overline t\leftarrow t$ \textbf{else} $\underline t\leftarrow t$\\
+% \textbf{Return:} $\overline t$\\
+% \hline
+% \end{tabular}
+% \end{center}
+
+\section{Conclusion}
+
+Probabilistic verification transforms mechanism design incentives into a graph geometry. In a wedge-separable class, the log-wedge variables satisfy directed Lipschitz constraints, and minimal transfers are given by a directed-distance envelope. Embedding this envelope into joint allocation and verification choice yields a convex program under log-convex wedge bounds and convex verification costs. For multi-dimensional stakes, coordinatewise feasibility produces submodular reduced wedge costs and a high-dimensional lattice of optimal stake vectors. A two-stage semimetric microfoundation yields a joint lattice in stakes and verification after directed closure; absent rank-1 scaling, single-crossing conditions still guarantee monotone verification choices. The resulting convex-lattice bridge supports algorithms combining shortest paths, convex feasibility, and bisection.
+
+\appendix
+\section{A fixed-point characterization of the directed-distance envelope}\label{app:fixedpoint}
+
+This appendix records an alternative characterization of the minimal wedge vector $y^\star$ as the least fixed point of a monotone operator.
+The argument is standard (Knaster-Tarski / Kleene iteration); see, e.g., \citet{Echenique2005} for a short proof of Tarski's theorem.
+
+\subsection{A monotone operator}
+
+Fix an authentication matrix $\alpha(i\mid\theta)\in[0,1]$ and wedge lower bounds $\underline y\in(0,\infty)^{\ThetaSet}$.
+Define the operator $T:(0,\infty]^{\ThetaSet}\to(0,\infty]^{\ThetaSet}$ by
+\begin{equation}\label{eq:Tk}
+(Ty)_\theta := \max\Big\{\underline y_\theta,\ \max_{i\in\ThetaSet}\alpha(i\mid\theta)\,y_i\Big\}.
+\end{equation}
+The map $T$ is isotone: if $y\le y'$ componentwise, then $Ty\le Ty'$ componentwise.
+
+\begin{lemma}[Feasibility as a post-fixed-point condition]\label{lem:postfixed}
+A vector $y\in(0,\infty]^{\ThetaSet}$ satisfies the wedge feasibility conditions
+\[
+y\ge \underline y,\qquad y_\theta\ge \alpha(i\mid\theta)y_i\ \ \forall \theta,i
+\]
+if and only if $y\ge Ty$ componentwise.
+\end{lemma}
+
+\begin{proof}
+By definition, $y\ge Ty$ is exactly the conjunction of the inequalities
+$y_\theta\ge \underline y_\theta$ and $y_\theta\ge \alpha(i\mid\theta)y_i$ for all $i$ (after taking the maximum over $i$).
+\end{proof}
+
+\subsection{Kleene iteration and least fixed point}
+
+Define an increasing sequence $(y^{(k)})_{k\ge 0}$ by
+\begin{equation}\label{eq:iter}
+y^{(0)}:=\underline y,\qquad y^{(k+1)}:=Ty^{(k)}\ \ (k\ge 0),
+\end{equation}
+and let $y^{(\infty)}:=\sup_{k\ge 0} y^{(k)}$ (componentwise supremum, allowing $+\infty$).
+
+\begin{proposition}[Least fixed point and least feasible wedges]\label{prop:kleene}
+The limit $y^{(\infty)}$ is a fixed point of $T$, and it is the least fixed point:
+if $y$ satisfies $Ty=y$, then $y^{(\infty)}\le y$. Equivalently, $y^{(\infty)}$ is the componentwise minimal feasible wedge vector.
+\end{proposition}
+
+\begin{proof}
+Because $y^{(0)}=\underline y\le Ty^{(0)}=y^{(1)}$ and $T$ is isotone, we have
+$y^{(k)}\le y^{(k+1)}$ for all $k$.
+
+For each $\theta$,
+\[
+(Ty^{(\infty)})_\theta
+=\max\Big\{\underline y_\theta,\ \max_i \alpha(i\mid\theta)\,\sup_k y^{(k)}_i\Big\}
+=\max\Big\{\underline y_\theta,\ \sup_k \max_i \alpha(i\mid\theta)\,y^{(k)}_i\Big\}
+=\sup_k (Ty^{(k)})_\theta
+=\sup_k y^{(k+1)}_\theta
+=y^{(\infty)}_\theta.
+\]
+Thus $Ty^{(\infty)}=y^{(\infty)}$.
+
+Let $y$ be any fixed point, so $y=Ty$. By isotonicity,
+$y=Ty\ge T y^{(k)}=y^{(k+1)}$ whenever $y\ge y^{(k)}$.
+Since $y\ge y^{(0)}=\underline y$, induction gives $y\ge y^{(k)}$ for all $k$, hence $y\ge \sup_k y^{(k)}=y^{(\infty)}$.
+\end{proof}
+
+\subsection{Unrolling the iteration yields the directed-distance envelope}
+
+For a directed path $p:\theta=\theta_0\to\theta_1\to\cdots\to\theta_m=j$, define its authentication product
+$\alpha(p):=\prod_{\ell=0}^{m-1}\alpha(\theta_{\ell+1}\mid\theta_\ell)$, and let $\mathcal{P}^k_{\theta}$ be the set of directed paths
+starting at $\theta$ with at most $k$ arcs (including the length-$0$ path $\theta$).
+
+\begin{lemma}[Path expansion of the iterates]\label{lem:path-expansion}
+For each $k\ge 0$ and $\theta\in\ThetaSet$,
+\[
+y^{(k)}_\theta \;=\; \max_{p\in\mathcal{P}^k_{\theta}}\ \alpha(p)\,\underline y_{\mathrm{end}(p)}.
+\]
+\end{lemma}
+
+\begin{proof}
+We argue by induction on $k$. For $k=0$, $\mathcal{P}^0_{\theta}$ contains only the length-$0$ path ending at $\theta$ with $\alpha(p)=1$,
+so the right-hand side equals $\underline y_\theta=y^{(0)}_\theta$.
+
+Assume the claim holds for $k$. Then
+\[
+y^{(k+1)}_\theta=(Ty^{(k)})_\theta
+=\max\Big\{\underline y_\theta,\ \max_{i}\alpha(i\mid\theta)\,y^{(k)}_i\Big\}
+=\max\Big\{\underline y_\theta,\ \max_i\alpha(i\mid\theta)\,\max_{p\in\mathcal{P}^k_i}\alpha(p)\underline y_{\mathrm{end}(p)}\Big\}.
+\]
+But each choice of $i$ and $p\in\mathcal{P}^k_i$ corresponds to concatenating the arc $\theta\to i$ with $p$, producing a path from $\theta$
+of length at most $k+1$ with product $\alpha(i\mid\theta)\alpha(p)$. Conversely, every nontrivial path of length at most $k+1$ begins with some first step
+$\theta\to i$ and then continues with a path from $i$ of length at most $k$. Taking maxima therefore yields exactly the stated formula for $y^{(k+1)}_\theta$.
+\end{proof}
+
+\begin{corollary}[Directed-distance envelope recovered]\label{cor:envelope-from-fp}
+Let $w(\theta,i)=-\log\alpha(i\mid\theta)$ (with $w(\theta,i)=+\infty$ if $\alpha(i\mid\theta)=0$) and let $d(\theta,j)$ be the induced shortest-path distance.
+Then the least fixed point $y^{(\infty)}$ from Proposition~\ref{prop:kleene} equals the envelope solution of Theorem~\ref{thm:envelope}:
+\[
+y^{(\infty)}_\theta
+=\max_{j\in\ThetaSet}\Big\{e^{-d(\theta,j)}\,\underline y_j\Big\}.
+\]
+\end{corollary}
+
+\begin{proof}
+By Lemma~\ref{lem:path-expansion} and the identity $\alpha(p)=\exp(-\sum_{(u,v)\in p} w(u,v))$,
+\[
+y^{(k)}_\theta
+=\max_{j}\ \max_{\substack{p:\theta\to j\\ |p|\le k}}\exp\!\Big(-\sum_{(u,v)\in p} w(u,v)\Big)\,\underline y_j.
+\]
+Taking the supremum over $k$ allows all finite paths and yields
+\[
+y^{(\infty)}_\theta=\max_{j}\ \exp\!\big(-d(\theta,j)\big)\,\underline y_j,
+\]
+because $d(\theta,j)$ is the infimum of path lengths and the outer maximum over $j$ commutes with the supremum over path families.
+\end{proof}
+
+\section{Reference Python implementation}
+\label{app:code}
+This appendix provides executable reference code for: 
+(i) computing minimal wedges $y^\star(q,t)$ via shortest paths and the directed envelope
+(Theorem~\ref{thm:envelope}); 
+(ii) numerically checking submodularity of $P_t$ (Theorem~\ref{thm:submodularity}); and
+(iii) computing a minimal verification intensity by bisection with convex feasibility solves
+(Section~\ref{sec:alg}). The implementation uses Python 3 with \texttt{numpy}; the LP-based
+feasibility and bisection routine additionally uses \texttt{scipy.optimize.linprog}.
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single
+}
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+from scipy.optimize import linprog
+
+def floyd_warshall(W):
+    D=W.copy()
+    n=D.shape[0]
+    for k in range(n):
+        D=np.minimum(D,D[:,[k]]+D[[k],:])
+    return D
+
+def min_wedges(alpha,q,mu=None,phi=None):
+    alpha=np.asarray(alpha,float)
+    n,m=alpha.shape
+    assert n==m
+    q=np.asarray(q,float)
+
+    if mu is None:
+        mu=np.ones(n)/n
+    else:
+        mu=np.asarray(mu,float)
+
+    if phi is None:
+        phi_vals=q.copy()
+    else:
+        phi_vals=np.array([phi[j](q[j]) for j in range(n)],float)
+
+    W=np.full((n,n),np.inf,float)
+    for th in range(n):
+        for j in range(n):
+            a=alpha[th,j]
+            if a>0:
+                W[th,j]=-np.log(a)
+    np.fill_diagonal(W,0.0)
+
+    D=floyd_warshall(W)
+    C=np.exp(-D)
+    y_star=np.max(C*phi_vals[None,:],axis=1)
+    P=float(np.dot(mu,y_star))
+    return y_star,P,D
+
+def check_submodularity(alpha,mu=None,trials=2000,seed=0):
+    rng=np.random.default_rng(seed)
+    n=alpha.shape[0]
+    if mu is None:
+        mu=np.ones(n)/n
+    for _ in range(trials):
+        q1=rng.uniform(0,5,size=n)
+        q2=rng.uniform(0,5,size=n)
+        _,P1,_=min_wedges(alpha,q1,mu=mu)
+        _,P2,_=min_wedges(alpha,q2,mu=mu)
+        qv=np.maximum(q1,q2)
+        qm=np.minimum(q1,q2)
+        _,Pv,_=min_wedges(alpha,qv,mu=mu)
+        _,Pm,_=min_wedges(alpha,qm,mu=mu)
+        if (P1+P2)<(Pv+Pm)-1e-8:
+            return False
+    return True
+
+def lp_feasible_for_target(ybar, cost_w, t_budget, q_target):
+    ybar = np.asarray(ybar, dtype=float)
+    n = len(ybar)
+    logy = np.log(ybar)
+    s_target = float(np.log(q_target))
+
+    num_r = n
+    num_w = n * n
+    N = num_r + num_w
+
+    def w_index(theta, j):
+        return num_r + theta * n + j
+
+    A_ub = []
+    b_ub = []
+
+    for j in range(n):
+        row = np.zeros(N)
+        row[j] = -1.0
+        A_ub.append(row)
+        b_ub.append(-(s_target + logy[j]))
+
+    for theta in range(n):
+        for j in range(n):
+            row = np.zeros(N)
+            row[j] += 1.0
+            row[theta] += -1.0
+            row[w_index(theta, j)] += -1.0
+            A_ub.append(row)
+            b_ub.append(0.0)
+
+    row = np.zeros(N)
+    for theta in range(n):
+        for j in range(n):
+            row[w_index(theta, j)] = cost_w[theta, j]
+    A_ub.append(row)
+    b_ub.append(t_budget)
+
+    A_eq = []
+    b_eq = []
+    for theta in range(n):
+        row = np.zeros(N)
+        row[w_index(theta, theta)] = 1.0
+        A_eq.append(row)
+        b_eq.append(0.0)
+
+    bounds = [(None, None)] * num_r + [(0.0, None)] * num_w
+
+    res = linprog(
+        c=np.zeros(N),
+        A_ub=np.array(A_ub), b_ub=np.array(b_ub),
+        A_eq=np.array(A_eq), b_eq=np.array(b_eq),
+        bounds=bounds,
+        method="highs",
+    )
+    return res.success
+
+def bisection_min_t(ybar, cost_w, q_target, t_lo, t_hi, tol=1e-6, max_iter=80):
+    if lp_feasible_for_target(ybar, cost_w, t_lo, q_target):
+        raise ValueError("t_lo already feasible; choose smaller t_lo.")
+    if not lp_feasible_for_target(ybar, cost_w, t_hi, q_target):
+        raise ValueError("t_hi infeasible; choose larger t_hi.")
+
+    lo, hi = t_lo, t_hi
+    for _ in range(max_iter):
+        mid = 0.5 * (lo + hi)
+        if lp_feasible_for_target(ybar, cost_w, mid, q_target):
+            hi = mid
+        else:
+            lo = mid
+        if hi - lo <= tol:
+            break
+    return hi
+\end{lstlisting}
+
+
+% \section*{Declaration of competing interest}
+% The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+% \section*{Data availability}
+% No data was used for the research described in the article.
+
+% \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+% During the preparation of this work the author(s) used an OpenAI language model (ChatGPT) in order to draft LaTeX scaffolding and to assist with exposition. After using this tool/service, the author(s) reviewed and edited the content as needed and take(s) full responsibility for the content of the published article.
+
+\bibliographystyle{elsarticle-harv}
+\bibliography{refs}
+
+\end{document}
